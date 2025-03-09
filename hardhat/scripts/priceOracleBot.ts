@@ -8,16 +8,20 @@ import Table from "cli-table3";
 const UPDATE_INTERVAL = 15000; // 15 seconds in milliseconds
 const PRICE_CHANGE_PERCENTAGE = 20; // 20% maximum price change
 
-// Base prices for AI tokens (in USD)
-const BASE_PRICES = {
-    aliAI: 5.50,  // $5.50
-    ozAI: 3.75,   // $3.75
-    ggAI: 2.25,   // $2.25
-    hiAI: 1.50    // $1.50
-};
+interface Agent {
+    name: string;
+    symbol: string;
+    contractAddress: string;
+    basePrice: number;
+    deploymentDate: string;
+}
+
+interface AgentRegistry {
+    agents: Agent[];
+}
 
 // Track current prices and changes
-let currentPrices = { ...BASE_PRICES };
+let currentPrices: { [key: string]: number } = {};
 let priceUpdates: {
     symbol: string;
     currentPrice: number;
@@ -37,9 +41,17 @@ function formatPrice(price: number): string {
 }
 
 function formatPercentage(percentage: number): string {
-    const formattedValue = `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
-    return percentage >= 0 ? kleur.green(formattedValue) : kleur.red(formattedValue);
+    const color = percentage >= 0 ? kleur.green : kleur.red;
+    return color(`${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`);
 }
+
+
+function displayHeader() {
+    console.log('\n' + '═'.repeat(60));
+    console.log(kleur.blue().bold('                   AI Token Price Oracle Bot'));
+    console.log('═'.repeat(60) + '\n');
+}
+
 
 function displayPriceTable() {
     const table = new Table({
@@ -76,34 +88,26 @@ function displayPriceTable() {
     priceUpdates = []; // Clear updates for next round
 }
 
-function displayHeader() {
-    console.log('\n' + '═'.repeat(60));
-    console.log(kleur.blue().bold('                   AI Token Price Oracle Bot'));
-    console.log('═'.repeat(60) + '\n');
-}
-
 async function updatePrice(
     oracle: any,
-    tokenAddress: string,
-    tokenSymbol: string,
-    decimals: number
+    agent: Agent
 ) {
     try {
-        const currentPrice = currentPrices[tokenSymbol as keyof typeof currentPrices];
+        const currentPrice = currentPrices[agent.symbol] || agent.basePrice;
         const newPrice = getRandomPriceChange(currentPrice);
         const priceChange = ((newPrice - currentPrice) / currentPrice) * 100;
-        const deviation = ((newPrice - BASE_PRICES[tokenSymbol as keyof typeof BASE_PRICES]) / BASE_PRICES[tokenSymbol as keyof typeof BASE_PRICES]) * 100;
+        const deviation = ((newPrice - agent.basePrice) / agent.basePrice) * 100;
 
         // Update price in oracle
-        const scaledPrice = ethers.parseUnits(newPrice.toFixed(decimals), decimals);
-        await oracle.updatePrice(tokenAddress, scaledPrice);
+        const scaledPrice = ethers.parseUnits(newPrice.toString(), 18);
+        await oracle.updatePrice(agent.contractAddress, scaledPrice);
 
         // Update current price for next iteration
-        currentPrices[tokenSymbol as keyof typeof currentPrices] = newPrice;
+        currentPrices[agent.symbol] = newPrice;
 
         // Store update for table display
         priceUpdates.push({
-            symbol: tokenSymbol,
+            symbol: agent.symbol,
             currentPrice,
             newPrice,
             change: priceChange,
@@ -111,7 +115,7 @@ async function updatePrice(
         });
 
     } catch (error) {
-        console.error(kleur.red(`Error updating ${tokenSymbol} price:`), error);
+        console.error(kleur.red(`Error updating ${agent.symbol} price:`), error);
     }
 }
 
@@ -125,12 +129,24 @@ async function main() {
 
         const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
 
-        // Get contract instances
+        // Load agent registry
+        const registryPath = path.join(__dirname, "agents/agent-registry.json");
+        if (!fs.existsSync(registryPath)) {
+            throw new Error("Agent registry not found. Please create agents first.");
+        }
+
+        const registry: AgentRegistry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
+        if (registry.agents.length === 0) {
+            throw new Error("No agents found in registry.");
+        }
+
+        // Initialize current prices from base prices
+        registry.agents.forEach(agent => {
+            currentPrices[agent.symbol] = agent.basePrice;
+        });
+
+        // Get contract instance
         const oracle = await ethers.getContractAt("PriceOracle", deployment.priceOracle);
-        const aliAI = await ethers.getContractAt("AliAIToken", deployment.aliAI);
-        const ozAI = await ethers.getContractAt("OzAIToken", deployment.ozAI);
-        const ggAI = await ethers.getContractAt("GGAIToken", deployment.ggAI);
-        const hiAI = await ethers.getContractAt("HiAIToken", deployment.hiAI);
 
         // Display welcome message
         displayHeader();
@@ -139,10 +155,9 @@ async function main() {
 
         // Initial price update
         console.log(kleur.blue('Updating initial prices...'));
-        await updatePrice(oracle, await aliAI.getAddress(), "aliAI", 18);
-        await updatePrice(oracle, await ozAI.getAddress(), "ozAI", 18);
-        await updatePrice(oracle, await ggAI.getAddress(), "ggAI", 18);
-        await updatePrice(oracle, await hiAI.getAddress(), "hiAI", 18);
+        for (const agent of registry.agents) {
+            await updatePrice(oracle, agent);
+        }
         console.log(kleur.green('Initial prices updated successfully\n'));
 
         console.log(kleur.yellow('=== Initial Price Update ==='));
@@ -152,10 +167,9 @@ async function main() {
         let updateCount = 1;
         setInterval(async () => {
             console.log(kleur.blue('\nUpdating prices...'));
-            await updatePrice(oracle, await aliAI.getAddress(), "aliAI", 18);
-            await updatePrice(oracle, await ozAI.getAddress(), "ozAI", 18);
-            await updatePrice(oracle, await ggAI.getAddress(), "ggAI", 18);
-            await updatePrice(oracle, await hiAI.getAddress(), "hiAI", 18);
+            for (const agent of registry.agents) {
+                await updatePrice(oracle, agent);
+            }
             console.log(kleur.green('Price update completed\n'));
 
             console.log(kleur.yellow(`=== Price Update #${updateCount} ===`));

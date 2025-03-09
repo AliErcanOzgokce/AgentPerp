@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverComponentsExternalPackages: ['hardhat'],
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      hardhat: '/Users/aliercanozgokce/Desktop/AgentPerp/hardhat',
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
