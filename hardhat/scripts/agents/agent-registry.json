@@ -1,0 +1,25 @@
+{
+  "agents": [
+    {
+      "name": "TradeMaster",
+      "symbol": "TRAD",
+      "contractAddress": "0x05830Df4Ee873ecD45DD42b4797a8Bb03daDa260",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:02:41.871Z"
+    },
+    {
+      "name": "TradeMaster",
+      "symbol": "TRAD",
+      "contractAddress": "0xDfB740a9Ba909a2cB0610Ad2B87Ae38B909dE991",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:04:08.618Z"
+    },
+    {
+      "name": "TradeMaster",
+      "symbol": "TRAD",
+      "contractAddress": "0xFe773Ea65f26fcfefcE54728Ca7e3e98EdaE8e97",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:40:11.103Z"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-verify";
+import "./scripts/agents/create-agent";
 import "dotenv/config";
 
 const config: HardhatUserConfig = {
