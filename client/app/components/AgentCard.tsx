@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { formatPrice } from "../lib/utils";
+import { useRouter } from "next/navigation";
 
 // Mock descriptions for agents
-const AGENT_DESCRIPTIONS = {
+export const AGENT_DESCRIPTIONS = {
   aliAI: "Advanced trading algorithm specializing in momentum-based strategies with real-time.",
   ozAI: "Sophisticated arbitrage detection system utilizing cross-chain data analysis for trading .",
   zeAI: "High-frequency trading bot with advanced pattern recognition and risk management protocols.",
@@ -30,6 +31,7 @@ interface AgentCardProps {
 }
 
 const AgentCard = ({ name, symbol, currentPrice, basePrice, tokenAddress }: AgentCardProps) => {
+  const router = useRouter();
   // Calculate MCap (price * 21 million)
   const price = parseFloat(currentPrice);
   const mcapValue = price * 21000000;
@@ -160,7 +162,9 @@ const AgentCard = ({ name, symbol, currentPrice, basePrice, tokenAddress }: Agen
             </div>
 
             {/* Trade Button */}
-            <button className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-[6px] min-w-full transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-[hsla(220,10%,12%,1)] text-white shadow-[0px_1px_1px_0px_rgba(255,255,255,0.12)_inset,0px_1px_2px_0px_rgba(0,0,0,0.08),0px_0px_0px_1px_#000] hover:bg-[hsla(220,10%,18%,1)] h-12 px-4 py-[6px] rounded-[100px] text-[16px] leading-[24px] font-[500]">
+            <button 
+              onClick={() => router.push(`/trade/${tokenAddress}`)}
+              className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-[6px] min-w-full transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-[hsla(220,10%,12%,1)] text-white shadow-[0px_1px_1px_0px_rgba(255,255,255,0.12)_inset,0px_1px_2px_0px_rgba(0,0,0,0.08),0px_0px_0px_1px_#000] hover:bg-[hsla(220,10%,18%,1)] h-12 px-4 py-[6px] rounded-[100px] text-[16px] leading-[24px] font-[500]">
               Trade Now
             </button>
           </div>
