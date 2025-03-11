@@ -4,37 +4,26 @@ import { motion } from 'framer-motion';
 import AgentCard from './components/AgentCard';
 import Hero from './components/Hero';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const mockAgents = [
-  {
-    name: "House of Molandak",
-    symbol: "DAK",
-    description: "Known for courage and tradition. Molandak is home to the brave-hearted who rip challenges.",
-    basePrice: 0.112,
-    currentPrice: 0.112,
-    image: "/agents/1.jpeg"
-  },
-  {
-    name: "House of Moyaki",
-    symbol: "YAKI",
-    description: "Moyaki swims for those who rise from humble beginnings with an unyielding drive to succeed.",
-    basePrice: 0.000621,
-    currentPrice: 0.000621,
-    image: "/agents/2.jpeg"
-  },
-  {
-    name: "House of Chog",
-    symbol: "CHOG",
-    description: "Chog is the house for the wise and industrious who value intellect, strategy, and tireless.",
-    basePrice: 0.00709,
-    currentPrice: 0.00709,
-    image: "/agents/3.jpeg"
-  }
-];
+interface Agent {
+  name: string;
+  symbol: string;
+  tokenAddress: string;
+  currentPrice: string;
+  basePrice: string;
+  timestamp: string;
+  decimals: string;
+  status: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: Agent[];
+}
 
 const filterIcons = {
-  'All Houses': (
+  'All Agents': (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
@@ -57,10 +46,54 @@ const filterIcons = {
 };
 
 export default function Home() {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState('All Houses');
+  const [selectedFilter, setSelectedFilter] = useState('All Agents');
 
-  const filters = ['All Houses', 'Highest Price', 'Lowest Price', 'Recently Added'];
+  const filters = ['All Agents', 'Highest Price', 'Lowest Price', 'Recently Added'];
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch('/api/prices/all');
+        const data: ApiResponse = await response.json();
+        
+        if (data.success) {
+          setAgents(data.data);
+        } else {
+          setError('Failed to fetch agent data');
+        }
+      } catch (err) {
+        setError('Error fetching agent data');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#6E54FF]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-400 text-center">
+          <p className="text-xl font-bold mb-2">Error</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center">
@@ -135,15 +168,15 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-            {mockAgents.map((agent) => (
-              <motion.div
-                key={agent.symbol}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <AgentCard agent={agent} />
-              </motion.div>
+            {agents.map((agent) => (
+              <AgentCard
+                key={agent.tokenAddress}
+                name={agent.name}
+                symbol={agent.symbol}
+                currentPrice={agent.currentPrice}
+                basePrice={agent.basePrice}
+                tokenAddress={agent.tokenAddress}
+              />
             ))}
           </div>
         </div>

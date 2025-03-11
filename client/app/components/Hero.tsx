@@ -23,7 +23,7 @@ export default function Hero() {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Trade AI Agents on AgentPerp
+            Trade AI Agents on InfinityX
           </h1>
           
           <div className="flex flex-col items-center gap-6">

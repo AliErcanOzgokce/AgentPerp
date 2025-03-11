@@ -1,23 +1,44 @@
 {
   "agents": [
     {
-      "name": "TradeMaster",
-      "symbol": "TRAD",
-      "contractAddress": "0x05830Df4Ee873ecD45DD42b4797a8Bb03daDa260",
+      "name": "aliAI",
+      "symbol": "aliAI",
+      "contractAddress": "0xF3c3E02f7DB5F41627445C138D71e5050F34641d",
       "basePrice": 2,
       "deploymentDate": "2025-03-09T21:02:41.871Z"
     },
     {
-      "name": "TradeMaster",
-      "symbol": "TRAD",
-      "contractAddress": "0xDfB740a9Ba909a2cB0610Ad2B87Ae38B909dE991",
+      "name": "ozAI",
+      "symbol": "ozAI",
+      "contractAddress": "0xF7772ef3510ceFc5d9c99Dcc709AD7980f60AcB8",
       "basePrice": 2,
       "deploymentDate": "2025-03-09T21:04:08.618Z"
     },
     {
-      "name": "TradeMaster",
-      "symbol": "TRAD",
+      "name": "zeAI",
+      "symbol": "zeAI",
       "contractAddress": "0xFe773Ea65f26fcfefcE54728Ca7e3e98EdaE8e97",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:40:11.103Z"
+    },
+    {
+      "name": "hiAI",
+      "symbol": "hiAI",
+      "contractAddress": "0x3371F2140B377651B27D618963d7Af17fbB92F22",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:40:11.103Z"
+    },
+    {
+      "name": "ggAI",
+      "symbol": "ggAI",
+      "contractAddress": "0x2b45D54b70c0e548ed5a88775b7Cbf70DeBB22c0",
+      "basePrice": 2,
+      "deploymentDate": "2025-03-09T21:40:11.103Z"
+    },
+    {
+      "name": "gmonadAI",
+      "symbol": "gmonadAI",
+      "contractAddress": "0xDfB740a9Ba909a2cB0610Ad2B87Ae38B909dE991",
       "basePrice": 2,
       "deploymentDate": "2025-03-09T21:40:11.103Z"
     }

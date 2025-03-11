@@ -1,27 +1,62 @@
 import Image from "next/image";
 import { formatPrice } from "../lib/utils";
 
+// Mock descriptions for agents
+const AGENT_DESCRIPTIONS = {
+  aliAI: "Advanced trading algorithm specializing in momentum-based strategies with real-time.",
+  ozAI: "Sophisticated arbitrage detection system utilizing cross-chain data analysis for trading .",
+  zeAI: "High-frequency trading bot with advanced pattern recognition and risk management protocols.",
+  hiAI: "Machine learning-powered trading system focusing on market sentiment and analysis.",
+  ggAI: "Quantitative trading algorithm specializing in statistical arbitrage and mean reversion strategies.",
+  gmonadAI: "Neural network-based trading system with deep learning capabilities for market prediction."
+};
+
+// Mock price changes (would come from API in real implementation)
+const MOCK_PRICE_CHANGES = {
+  aliAI: 18.9,
+  ozAI: -12.5,
+  hiAI: 24.8,
+  zeAI: -8.7,
+  ggAI: 15.3,
+  gmonadAI: 22.1
+};
+
 interface AgentCardProps {
-  agent: {
-    name: string;
-    symbol: string;
-    basePrice: number;
-    currentPrice?: number;
-    description: string;
-    image: string;
-    mcap?: number;
-  };
+  name: string;
+  symbol: string;
+  currentPrice: string;
+  basePrice: string;
+  tokenAddress: string;
 }
 
-const AgentCard = ({ agent }: AgentCardProps) => {
+const AgentCard = ({ name, symbol, currentPrice, basePrice, tokenAddress }: AgentCardProps) => {
   // Calculate MCap (price * 21 million)
-  const price = agent.currentPrice || agent.basePrice;
+  const price = parseFloat(currentPrice);
   const mcapValue = price * 21000000;
+  const priceChange = MOCK_PRICE_CHANGES[symbol] || 0;
+  
+  // Calculate TVL as 60-80% of MCAP
+  const tvlPercentage = 0.6 + Math.random() * 0.2;
+  const tvl = mcapValue * tvlPercentage;
+  
+  // Calculate 24h volume as 5-15% of TVL
+  const volumePercentage = 0.05 + Math.random() * 0.1;
+  const volume = tvl * volumePercentage;
+
+  const formatValue = (value: number) => {
+    if (value >= 1000000000) {
+      return `$${(value / 1000000000).toFixed(2)}B`;
+    } else if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(2)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(2)}K`;
+    } else {
+      return `$${value.toFixed(2)}`;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 flex-1 w-full max-w-[540px]">
-      {/* Header Section */}
-
       {/* Card */}
       <div
         className="relative rounded-[32px] w-full p-[16px] text-center shadow-[0px_1px_1px_0px_hsla(0,0%,100%,0.12)_inset,0px_1px_2px_0px_hsla(0,0%,0%,0.08),0px_0px_0px_1px_hsla(0,0%,0%,1)]"
@@ -70,8 +105,8 @@ const AgentCard = ({ agent }: AgentCardProps) => {
             {/* Image */}
             <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
               <Image
-                src={agent.image}
-                alt={agent.name}
+                src={`/agents/${symbol}.jpeg`}
+                alt={name}
                 fill
                 className="object-cover"
                 priority
@@ -81,20 +116,20 @@ const AgentCard = ({ agent }: AgentCardProps) => {
             {/* Info */}
             <div className="text-left mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">
-                {agent.name}
+                {name}
               </h3>
-              <p className="text-gray-400 text-sm mb-4">{agent.description}</p>
+              <p className="text-gray-400 text-sm mb-4">{AGENT_DESCRIPTIONS[symbol]}</p>
               
               {/* Price Display */}
               <div className="flex items-center justify-between bg-black/40 rounded-2xl p-4 border border-white/5">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-gray-400">1 {agent.symbol} = </span>
+                  <span className="text-sm text-gray-400">1 {symbol} = </span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-[#6E54FF]">$</span>
                     <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
                       {price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 6
+                        maximumFractionDigits: 3
                       })}
                     </span>
                   </div>
@@ -102,10 +137,12 @@ const AgentCard = ({ agent }: AgentCardProps) => {
 
                 {/* 24h Change Indicator */}
                 <div className="flex items-center gap-1.5 bg-[#6E54FF]/5 px-3 py-1.5 rounded-full">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#6E54FF]">
-                    <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${priceChange >= 0 ? 'text-[#6E54FF]' : 'text-red-500'}`}>
+                    <path d={priceChange >= 0 ? "M12 20V4M5 11L12 4L19 11" : "M12 4V20M5 13L12 20L19 13"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span className="text-sm font-medium text-[#6E54FF]">2.34%</span>
+                  <span className={`text-sm font-medium ${priceChange >= 0 ? 'text-[#6E54FF]' : 'text-red-500'}`}>
+                    {Math.abs(priceChange).toFixed(2)}%
+                  </span>
                 </div>
               </div>
 
@@ -113,11 +150,11 @@ const AgentCard = ({ agent }: AgentCardProps) => {
               <div className="grid grid-cols-2 gap-2 mt-4">
                 <div className="bg-black/40 rounded-xl p-3 border border-white/5">
                   <p className="text-xs text-gray-400 mb-1">24h Volume</p>
-                  <p className="text-sm font-medium text-white">$1.2M</p>
+                  <p className="text-sm font-medium text-white">{formatValue(volume)}</p>
                 </div>
                 <div className="bg-black/40 rounded-xl p-3 border border-white/5">
                   <p className="text-xs text-gray-400 mb-1">TVL</p>
-                  <p className="text-sm font-medium text-white">$892K</p>
+                  <p className="text-sm font-medium text-white">{formatValue(tvl)}</p>
                 </div>
               </div>
             </div>
