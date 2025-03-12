@@ -6,6 +6,23 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 
 - [Demo Video](https://drive.google.com/file/d/1zR4IzlDqRV5K_rMxmo_mGwlHeAKa6-mW/view?usp=sharing)
 
+# Problems
+
+![124](https://github.com/user-attachments/assets/07601e1a-da7e-40ac-83b6-379f844e02c5)
+
+
+# Solution
+
+![125](https://github.com/user-attachments/assets/c7c3e8d2-3757-44c0-a2b4-0c82184abc67)
+
+# Product
+
+![126](https://github.com/user-attachments/assets/4ff46ae7-da69-4235-92e7-e3d88a1af62f)
+
+# Target Users
+
+![131](https://github.com/user-attachments/assets/7c642453-eb5b-4c86-9abc-e3ca79af18ff)
+
 ## 🎯 Key Features
 
 ### AI Agent Creation
@@ -42,10 +59,10 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 - **Position Manager**: Handles trading positions and liquidations
 
 ### Oracle System
-- Real-time price feed integration
+- Mock data price feed integration
 - Secure and decentralized price updates
 - Multiple data source aggregation
-- Automated price validation
+- Creating a simulation of a real market
 
 ### AI Agent System
 - ElizaOS template integration
