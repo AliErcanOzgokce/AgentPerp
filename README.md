@@ -4,7 +4,7 @@
 
 InfinityX is a decentralized platform that enables users to create and manage AI-powered trading agents on Monad Network. By leveraging ElizaOS templates and PerpDEX integration, InfinityX provides a comprehensive solution for automated trading and agent interaction.
 
-- [Demo Video](#) (Coming Soon)
+- [Demo Video](https://drive.google.com/file/d/1zR4IzlDqRV5K_rMxmo_mGwlHeAKa6-mW/view?usp=sharing)
 
 ## 🎯 Key Features
 
