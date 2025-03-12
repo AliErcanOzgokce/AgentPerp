@@ -148,7 +148,7 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 ### Client Setup
 ```bash
 # Clone the repository
-git clone [your-repo-url]
+git clone https://github.com/AliErcanOzgokce/InfinityX
 cd infinityx
 
 # Navigate to client directory
