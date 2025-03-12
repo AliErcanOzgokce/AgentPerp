@@ -6,6 +6,10 @@ import { formatPrice } from '@/app/lib/utils';
 import { AGENT_DESCRIPTIONS } from '@/app/components/AgentCard';
 import { useAccount } from 'wagmi';
 import TradingViewWidget from '@/app/components/TradingViewWidget';
+import { useUSDCBalance } from '@/app/hooks/useUSDCBalance';
+import { useUSDCApprove } from '@/app/hooks/useUSDCApprove';
+import { usePerpDex } from '@/app/hooks/usePerpDex';
+import PositionsTable from '@/app/components/PositionsTable';
 
 // Types for our component
 interface Position {
@@ -44,6 +48,30 @@ export default function TradePage({ params }: TradePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentData, setAgentData] = useState<any>(null);
+  const { address } = useAccount();
+  const { balance: usdcBalance, isLoading: isBalanceLoading } = useUSDCBalance();
+  const { useOpenPosition } = usePerpDex(params.tokenAddress);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isOpeningPosition, setIsOpeningPosition] = useState(false);
+  const [operationStatus, setOperationStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  // USDC Approve Hook
+  const {
+    write: approveUsdc,
+    isLoading: isApproveLoading,
+    isSuccess: isApproveSuccess,
+  } = useUSDCApprove(margin);
+
+  // Open Position Hook
+  const {
+    write: openPosition,
+    isLoading: isOpenPositionLoading,
+    isSuccess: isOpenPositionSuccess,
+    error: openPositionError
+  } = useOpenPosition(isLong, margin, leverage);
 
   // Fetch price and agent data
   useEffect(() => {
@@ -53,24 +81,15 @@ export default function TradePage({ params }: TradePageProps) {
         const priceRes = await fetch(`/api/prices/data/${params.tokenAddress}`);
         const priceJson = await priceRes.json();
         if (!priceJson.success) throw new Error(priceJson.error);
-        console.log(priceJson.data);
         setPriceData(priceJson.data.price);
+        setAgentData(priceJson.data.agent);
 
-        // Fetch agent data
-        const agentRes = await fetch('/api/prices/all');
-        const agentJson = await agentRes.json();
-        if (!agentJson.success) throw new Error(agentJson.error);
-        const agent = agentJson.data.find((a: any) => a.tokenAddress === params.tokenAddress);
-        if (!agent) throw new Error('Agent not found');
-        setAgentData(agent);
-        console.log(agent.data);
-
-
-        const walletAddress = "0x...";
-        const positionRes = await fetch(`/api/positions/${walletAddress}/${params.tokenAddress}`);
-        const positionJson = await positionRes.json();
-        if (positionJson.success) {
-          setPosition(positionJson.data);
+        if (address) {
+          const positionRes = await fetch(`/api/positions/${address}/${params.tokenAddress}`);
+          const positionJson = await positionRes.json();
+          if (positionJson.success) {
+            setPosition(positionJson.data);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -81,16 +100,121 @@ export default function TradePage({ params }: TradePageProps) {
 
     fetchData();
     // Set up polling for price updates
-    const interval = setInterval(fetchData, 1000000);
+    const interval = setInterval(fetchData, 10000); // Update every 10 seconds
     return () => clearInterval(interval);
-  }, [params.tokenAddress]);
+  }, [params.tokenAddress, address]);
 
+  // Handle Position Opening
+  const handleOpenPosition = async () => {
+    if (!margin || !leverage || !approveUsdc || !openPosition) return;
+    
+    try {
+      setOperationStatus({ type: null, message: '' });
+      
+      // First approve USDC
+      setIsApproving(true);
+      try {
+        // Send approve request
+        await approveUsdc();
+        
+        // Wait for 5 seconds
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Proceed with opening position
+        setIsApproving(false);
+        setIsOpeningPosition(true);
+        setOperationStatus({
+          type: 'success',
+          message: 'USDC Approved! Opening position...'
+        });
+        
+        // Send open position request
+        await openPosition();
+        
+        // Wait for 5 seconds
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Show final success message
+        setOperationStatus({
+          type: 'success',
+          message: `Successfully submitted ${isLong ? 'long' : 'short'} position`
+        });
+        
+        // Reset form
+        setMargin('');
+        setLeverage(20);
+      } catch (error: any) {
+        // Only show error if it's not a user rejection
+        if (error?.code !== 4001) {
+          setOperationStatus({
+            type: 'error',
+            message: 'Transaction failed'
+          });
+        }
+        console.error('Transaction error:', error);
+      }
+    } catch (error) {
+      console.error('General error:', error);
+    } finally {
+      setIsApproving(false);
+      setIsOpeningPosition(false);
+    }
+  };
 
   if (loading || !agentData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#6E54FF]"></div>
-      </div>
+      <main className="flex min-h-screen pt-24 flex-col items-center bg-[#0f1011]">
+        <div className="w-full max-w-[1300px] px-4 py-8">
+          {/* Agent Card Skeleton */}
+          <div className="w-full mb-6">
+            <div className="relative rounded-[32px] w-full p-[16px] text-center shadow-[0px_1px_1px_0px_hsla(0,0%,100%,0.12)_inset,0px_1px_2px_0px_hsla(0,0%,0%,0.08),0px_0px_0px_1px_hsla(0,0%,0%,1)] bg-[hsla(160,6%,7%,1)]">
+              <div className="pt-6 pb-4 rounded-[16px] p-[20px] lg:pt-[20px] relative">
+                <div className="flex items-start gap-6">
+                  {/* Image Skeleton */}
+                  <div className="w-[164px] h-[164px] rounded-3xl bg-gray-800 animate-pulse" />
+                  
+                  {/* Content Skeleton */}
+                  <div className="flex-1 pt-2">
+                    <div className="h-8 w-48 bg-gray-800 rounded-lg mb-4 animate-pulse" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-full max-w-[420px] bg-gray-800 rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-gray-800 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Grid Skeleton */}
+          <div className="grid grid-cols-12 gap-6">
+            {/* Chart Skeleton */}
+            <div className="col-span-8 bg-[hsla(160,6%,7%,1)] rounded-[32px] p-6">
+              <div className="w-full h-[560px] bg-gray-800 rounded-2xl animate-pulse" />
+            </div>
+
+            {/* Trading Interface Skeleton */}
+            <div className="col-span-4">
+              <div className="bg-[hsla(160,6%,7%,1)] rounded-[32px] p-6">
+                {/* Toggle Skeleton */}
+                <div className="h-12 bg-gray-800 rounded-full mb-6 animate-pulse" />
+
+                {/* Leverage Input Skeleton */}
+                <div className="h-[180px] bg-gray-800 rounded-2xl mb-4 animate-pulse" />
+
+                {/* Margin Input Skeleton */}
+                <div className="h-[100px] bg-gray-800 rounded-2xl mb-6 animate-pulse" />
+
+                {/* Balance Skeleton */}
+                <div className="h-[50px] bg-gray-800 rounded-2xl mb-4 animate-pulse" />
+
+                {/* Button Skeleton */}
+                <div className="h-12 bg-gray-800 rounded-full animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -231,7 +355,7 @@ export default function TradePage({ params }: TradePageProps) {
         <div className="grid grid-cols-12 gap-6">
           {/* Chart */}
           <div className="col-span-8 bg-[hsla(160,6%,7%,1)] rounded-[32px] p-6 shadow-[0px_4px_4px_0px_hsla(0,0%,0%,0.50)_inset] relative overflow-hidden">
-            <div className="w-full h-[450px]">
+            <div className="w-full h-[540px]">
               <TradingViewWidget />
             </div>
           </div>
@@ -378,8 +502,35 @@ export default function TradePage({ params }: TradePageProps) {
                     </div>
                   </div>
 
+                  {/* USDC Balance Display - Moved above the button */}
+                  <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/5 hover:border-[#6E54FF]/20 transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-400">USDC Balance</span>
+                      <span className="text-sm font-medium text-white">
+                        {isBalanceLoading ? (
+                          <div className="animate-pulse w-16 h-4 bg-gray-700 rounded"></div>
+                        ) : (
+                          `$${Number(usdcBalance?.formatted || 0).toLocaleString()}`
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Operation Status Message */}
+                  {operationStatus.type && (
+                    <div className={`mb-4 px-4 py-3 rounded-xl text-sm ${
+                      operationStatus.type === 'success' 
+                        ? 'bg-[#6E54FF]/10 text-[#6E54FF] border border-[#6E54FF]/20' 
+                        : 'bg-[#FF5454]/10 text-[#FF5454] border border-[#FF5454]/20'
+                    }`}>
+                      {operationStatus.message}
+                    </div>
+                  )}
+
                   {/* Open Position Button */}
                   <button 
+                    onClick={handleOpenPosition}
+                    disabled={!margin || !leverage || isApproving || isOpeningPosition || !address}
                     className={`inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-[6px] min-w-full transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] text-white h-12 px-4 py-[6px] rounded-[100px] text-[16px] leading-[24px] font-[500] ${
                       isLong 
                         ? 'bg-[#6E54FF] shadow-[0px_1px_0.5px_0px_rgba(255,255,255,0.33)_inset,0px_1px_2px_0px_rgba(26,19,161,0.50),0px_0px_0px_1px_#4F47EB] hover:bg-[#836EF9] hover:shadow-[0px_1px_1px_0px_rgba(255,255,255,0.12)_inset,0px_1px_2px_0px_rgba(26,19,161,0.50),0px_0px_0px_1px_#4F47EB]' 
@@ -387,60 +538,40 @@ export default function TradePage({ params }: TradePageProps) {
                     }`}
                   >
                     <span className="flex items-center justify-center gap-2">
-                      {isLong ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                          <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                      {isApproving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Approving USDC...
+                        </>
+                      ) : isOpeningPosition ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Opening Position...
+                        </>
                       ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                          <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                        <>
+                          {isLong ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                              <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                              <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                          {!address ? 'Connect Wallet' : isLong ? 'Open Long Position' : 'Open Short Position'}
+                        </>
                       )}
-                      {isLong ? 'Open Long Position' : 'Open Short Position'}
                     </span>
                   </button>
-
-                  {/* Positions Section */}
-                  {position && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-medium text-white mb-4">Open Positions</h3>
-                      <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-5 border border-white/5 hover:border-[#6E54FF]/20 transition-all duration-300 hover:bg-black/40">
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Size</span>
-                            <span className="text-white font-medium">${position.size}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Entry Price</span>
-                            <span className="text-white font-medium">${position.entryPrice}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Leverage</span>
-                            <span className="text-white font-medium">{position.leverage}x</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Liquidation Price</span>
-                            <span className="text-white font-medium">${position.liquidationPrice}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Unrealized PnL</span>
-                            <span className={`font-medium ${
-                              parseFloat(position.unrealizedPnL) >= 0
-                                ? 'text-[#6E54FF]'
-                                : 'text-[#FF5454]'
-                            }`}>
-                              ${position.unrealizedPnL}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Add PositionsTable */}
+        <PositionsTable />
       </div>
     </main>
   );

@@ -1,48 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPerpDEX, validateAddress, formatPosition } from '@/app/lib/contracts';
+import { validateAddress } from '@/app/lib/utils';
+import { getPerpDEX } from '@/app/lib/contracts';
+import { formatPrice } from '@/app/lib/utils';
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: { traderAddress: string, tokenAddress: string } }
+    request: Request,
+    { params }: { params: { traderAddress: string; tokenAddress: string } }
 ) {
+    const { traderAddress, tokenAddress } = await params;
+
     try {
         // Validate addresses
-        if (!validateAddress(params.traderAddress)) {
-            return NextResponse.json(
-                { error: 'Invalid trader address' },
-                { status: 400 }
-            );
+        if (!validateAddress(traderAddress) || !validateAddress(tokenAddress)) {
+            return NextResponse.json({
+                success: false,
+                error: 'Invalid address format'
+            });
         }
 
-        if (!validateAddress(params.tokenAddress)) {
-            return NextResponse.json(
-                { error: 'Invalid token address' },
-                { status: 400 }
-            );
-        }
 
         // Get position
         const perpDex = getPerpDEX();
-        const position = await perpDex.getPosition(params.traderAddress, params.tokenAddress);
+        const position = await perpDex.getPosition(traderAddress, tokenAddress);
+        console.log("Position", position);
 
         // Get unrealized PnL
-        const pnl = await perpDex.getUnrealizedPnL(params.traderAddress, params.tokenAddress);
+        const pnl = await perpDex.getUnrealizedPnL(traderAddress, tokenAddress);
 
+        // Check if position exists (size > 0)
+        const hasPosition = position.size > 0n;
+
+        // Convert BigInt values to strings for JSON serialization
         return NextResponse.json({
             success: true,
             data: {
-                ...formatPosition(position),
+                trader: traderAddress,
+                token: tokenAddress,
+                isLong: position.isLong,
+                size: position.size.toString(),
+                margin: position.margin.toString(),
+                entryPrice: position.entryPrice.toString(),
+                liquidationPrice: position.liquidationPrice.toString(),
+                leverage: position.leverage.toString(),
+                lastUpdateTimestamp: position.lastUpdateTimestamp.toString(),
                 unrealizedPnL: pnl.toString()
             }
         });
-    } catch (error: any) {
+
+    } catch (error) {
         console.error('Error fetching position:', error);
-        return NextResponse.json(
-            { 
-                error: error.message || 'Failed to fetch position',
-                details: error.toString()
-            },
-            { status: 500 }
-        );
+        return NextResponse.json({
+            success: false,
+            error: 'Failed to fetch position'
+        }, { status: 500 });
     }
 } 

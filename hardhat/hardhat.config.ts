@@ -27,6 +27,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
+    enabled: false,
     apiKey: {
       monadTestnet: process.env.MONAD_API_KEY || "",
     },
@@ -50,6 +51,11 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain-types",
     target: "ethers-v6",
+  },
+  sourcify: {
+    enabled: true,
+    apiUrl: "https://sourcify-api-monad.blockvision.org",
+    browserUrl: "https://testnet.monadexplorer.com"
   },
 };
 

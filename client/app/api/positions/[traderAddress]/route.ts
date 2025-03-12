@@ -1,84 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPerpDEX, validateAddress, formatPosition } from '@/app/lib/contracts';
-import fs from 'fs';
-import path from 'path';
+import { validateAddress } from '@/app/lib/utils';
+import { getPerpDEX } from '@/app/lib/contracts';
+import { formatPrice } from '@/app/lib/utils';
 
-interface AgentRegistry {
-    agents: {
-        name: string;
-        symbol: string;
-        contractAddress: string;
-        basePrice: number;
-        deploymentDate: string;
-    }[];
+interface Position {
+    token: string;
+    isLong: boolean;
+    size: bigint;
+    margin: bigint;
+    entryPrice: bigint;
+    liquidationPrice: bigint;
+    leverage: bigint;
+    lastUpdateTimestamp: bigint;
 }
 
 export async function GET(
     request: NextRequest,
     { params }: { params: { traderAddress: string } }
 ) {
+    const { traderAddress } = params;
+
     try {
         // Validate trader address
-        if (!validateAddress(params.traderAddress)) {
+        if (!validateAddress(traderAddress)) {
             return NextResponse.json(
                 { error: 'Invalid trader address' },
                 { status: 400 }
             );
         }
 
-        // Load agent registry to get all tokens
-        const registryPath = path.join(process.cwd(), '..', 'hardhat', 'scripts', 'agents', 'agent-registry.json');
-        if (!fs.existsSync(registryPath)) {
-            return NextResponse.json(
-                { error: 'Agent registry not found' },
-                { status: 404 }
-            );
-        }
-
-        const registry: AgentRegistry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-        if (registry.agents.length === 0) {
-            return NextResponse.json(
-                { error: 'No agents found in registry' },
-                { status: 404 }
-            );
-        }
-
-        // Get positions for all tokens
+        // Get positions
         const perpDex = getPerpDEX();
-        const positionPromises = registry.agents.map(async (agent) => {
-            try {
-                const position = await perpDex.getPosition(params.traderAddress, agent.contractAddress);
-                const pnl = await perpDex.getUnrealizedPnL(params.traderAddress, agent.contractAddress);
+        const positions = await perpDex.getPositions(traderAddress);
 
-                // Only include positions with non-zero size
-                if (position.size > 0n) {
-                    return {
-                        name: agent.name,
-                        symbol: agent.symbol,
-                        ...formatPosition(position),
-                        unrealizedPnL: pnl.toString()
-                    };
-                }
-                return null;
-            } catch (error) {
-                console.error(`Error fetching position for ${agent.symbol}:`, error);
-                return null;
-            }
-        });
-
-        const positions = (await Promise.all(positionPromises)).filter(Boolean);
+        // Get unrealized PnL for each position
+        const positionsWithPnL = await Promise.all(
+            positions.map(async (position: Position) => {
+                const pnl = await perpDex.getUnrealizedPnL(traderAddress, position.token);
+                return {
+                    name: "Ali AI", // TODO: Get from token metadata
+                    symbol: "aliAI",
+                    isLong: position.isLong,
+                    size: formatPrice(position.size, 18),
+                    margin: formatPrice(position.margin, 18),
+                    entryPrice: formatPrice(position.entryPrice, 18),
+                    liquidationPrice: formatPrice(position.liquidationPrice, 18),
+                    leverage: formatPrice(position.leverage, 18),
+                    unrealizedPnL: formatPrice(pnl, 18)
+                };
+            })
+        );
 
         return NextResponse.json({
             success: true,
-            data: positions
+            data: positionsWithPnL
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error fetching positions:', error);
         return NextResponse.json(
-            { 
-                error: error.message || 'Failed to fetch positions',
-                details: error.toString()
-            },
+            { error: 'Failed to fetch positions' },
             { status: 500 }
         );
     }
