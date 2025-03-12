@@ -21,14 +21,13 @@ export default function PositionsTable() {
   const [position, setPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
   const { address } = useAccount();
   const params = useParams();
   const tokenAddress = params.tokenAddress as string;
 
   // Get close position function from usePerpDex hook
   const { useClosePosition } = usePerpDex(tokenAddress);
-  const { write: closePosition } = useClosePosition();
+  const { write: closePosition, isLoading: isClosing, isSuccess: isCloseSuccess, error: closeError } = useClosePosition();
 
   useEffect(() => {
     const fetchPosition = async () => {
@@ -56,17 +55,25 @@ export default function PositionsTable() {
     return () => clearInterval(interval);
   }, [address, tokenAddress]);
 
-  const handleClosePosition = async () => {
-    if (!closePosition) return;
-    
-    try {
-      setIsClosing(true);
-      await closePosition();
-    } catch (error) {
-      console.error('Error closing position:', error);
-    } finally {
-      setIsClosing(false);
+  // Effect to handle close position success
+  useEffect(() => {
+    if (isCloseSuccess) {
+      // Refetch position after successful close
+      const fetchPosition = async () => {
+        if (!address || !tokenAddress) return;
+        const response = await fetch(`/api/positions/${address}/${tokenAddress}`);
+        const json = await response.json();
+        if (json.success) {
+          setPosition(json.data);
+        }
+      };
+      fetchPosition();
     }
+  }, [isCloseSuccess, address, tokenAddress]);
+
+  const handleClosePosition = () => {
+    if (!closePosition) return;
+    closePosition();
   };
 
   if (loading) {
@@ -197,7 +204,7 @@ export default function PositionsTable() {
                     <td className="py-4 px-4 text-right">
                       <button
                         onClick={handleClosePosition}
-                        disabled={isClosing}
+                        disabled={isClosing || !closePosition}
                         className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                           isClosing
                             ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
@@ -226,6 +233,11 @@ export default function PositionsTable() {
           </div>
         </div>
       </div>
+      {closeError && (
+        <div className="mt-2 text-sm text-[#FF5454]">
+          Failed to close position. Please try again.
+        </div>
+      )}
     </div>
   );
 } 

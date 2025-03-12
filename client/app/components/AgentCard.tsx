@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { formatPrice } from "../lib/utils";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // Mock descriptions for agents
 export const AGENT_DESCRIPTIONS = {
@@ -162,11 +163,12 @@ const AgentCard = ({ name, symbol, currentPrice, basePrice, tokenAddress }: Agen
             </div>
 
             {/* Trade Button */}
-            <button 
-              onClick={() => router.push(`/trade/${tokenAddress}`)}
+            <Link 
+              href={`/trade/${tokenAddress}`}
+              target="_blank"
               className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-[6px] min-w-full transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-[hsla(220,10%,12%,1)] text-white shadow-[0px_1px_1px_0px_rgba(255,255,255,0.12)_inset,0px_1px_2px_0px_rgba(0,0,0,0.08),0px_0px_0px_1px_#000] hover:bg-[hsla(220,10%,18%,1)] h-12 px-4 py-[6px] rounded-[100px] text-[16px] leading-[24px] font-[500]">
               Trade Now
-            </button>
+            </Link>
           </div>
         </div>
       </div>
