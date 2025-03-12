@@ -26,6 +26,13 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 - Advanced natural language processing
 - Multi-platform support
 
+### Tokenomics
+- Deflationary token mechanism
+- 0.1% burn on perpetual trades
+- 10% burn from prediction market rewards
+- Automated burn process
+- Long-term value appreciation strategy
+
 ## 🏗 Technical Architecture
 
 ### Smart Contracts
@@ -79,11 +86,16 @@ InfinityX is a decentralized platform that enables users to create and manage AI
   - Discord Client Support
   - Instagram Client Support
 - Advanced Agent Functionality Expansion
+- Deflationary Token Mechanism Implementation
+  - 0.1% burn on all perpetual trades
+  - 10% burn from prediction market reward pools
+  - Token scarcity optimization
 
 ### Q3 2025
 - Prediction Market Launch
 - NFT Implementation for Agent Tickers
 - Enhanced Security Features
+- Cross-platform Agent Integration
 
 ### Q4 2025
 - Fair Launch Platform Development
@@ -107,8 +119,112 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 - **Next.js**: Frontend framework
 - **Hardhat**: Smart contract deployment and testing
 
-## 🔗 Quick Links
+## 🚀 Setup Guide
 
+### Prerequisites
+- Node.js (v18 or higher)
+- Git
+- npm
+- A Monad RPC URL
+- OpenAI API Key (for agent creation)
+
+### Client Setup
+```bash
+# Clone the repository
+git clone [your-repo-url]
+cd infinityx
+
+# Navigate to client directory
+cd client
+
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+
+# Add your environment variables
+# Edit .env file with your credentials:
+NEXT_PUBLIC_MONAD_RPC_URL=your_monad_rpc_url
+NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
+NEXT_PUBLIC_PERP_DEX_ADDRESS=0x71D31DfDc176FC04d29Fbe63b8f33810F34F0C49
+NEXT_PUBLIC_PRICE_ORACLE_ADDRESS=0x71D31DfDc176FC04d29Fbe63b8f33810F34F0C49
+
+# Run development server
+npm run dev
+```
+
+### Hardhat Setup
+```bash
+# Navigate to hardhat directory
+cd hardhat
+
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+
+# Add your environment variables
+# Edit .env file with your credentials:
+MONAD_RPC_URL=your_monad_rpc_url
+PRIVATE_KEY=your_wallet_private_key
+
+# Deploy contracts to Monad
+npm run deploy:monad
+
+# Start price oracle bot
+npm run bot:price
+
+# Run contract tests
+npx hardhat test
+```
+
+### Important Scripts
+
+#### Client
+- `npm run dev`: Start development server on localhost:3000
+
+#### Hardhat
+- `npm run deploy:monad`: Deploys all contracts to Monad network
+- `npm run bot:price`: Starts the price oracle bot that updates token prices
+- `npx hardhat test`: Runs all contract tests
+- `npx hardhat create-agent --name YourAgentName --symbol YourSymbol`: Creates a new trading agent with specified name and symbol
+
+### Environment Variables
+
+#### Client (.env)
+```plaintext
+NEXT_PUBLIC_MONAD_RPC_URL=        # Monad RPC URL
+NEXT_PUBLIC_OPENAI_API_KEY=       # OpenAI API Key
+NEXT_PUBLIC_PERP_DEX_ADDRESS=     # Deployed PerpDEX address
+NEXT_PUBLIC_PRICE_ORACLE_ADDRESS= # Deployed PriceOracle address
+```
+
+#### Hardhat (.env)
+```plaintext
+MONAD_RPC_URL=                    # Monad RPC URL
+PRIVATE_KEY=                      # Your wallet private key verification
+```
+
+### Creating a New Agent
+To create a new trading agent, use the Hardhat task:
+```bash
+cd hardhat
+npx hardhat create-agent --name YourAgentName --symbol YourSymbol
+```
+This will:
+1. Generate agent token with specified name and symbol
+2. Deploy agent contract
+3. Set up initial configuration
+4. Register agent in the system
+
+Example:
+```bash
+npx hardhat create-agent --name "Trading Master" --symbol TMAI
+```
+
+## 🔗 Quick Links
 
 ### Agent Social Media
 - [aliAI Twitter](https://twitter.com/alAI58360)
