@@ -2,7 +2,7 @@
 
 # InfinityX: AI-Agent Platform on Monad
 
-InfinityX is a decentralized platform that enables users to create and manage AI-Agents on Monad Network. By leveraging ElizaOS templates and PerpDEX integration, InfinityX provides a comprehensive solution for automated trading and agent interaction.
+InfinityX revolutionizes Al-driven finance by enabling anyone to create, tokenize, and interact with Al agents in a decentralized ecosystem. Through social prediction markets and perpetual speculation, users can launch Al agents, predict their actions, and use their tokens as collateral in trading. A deflationary token economy ensures long-term value by burning fees from trades and rewards. InfinityX shifts Al from passive automation to active, tradable, and speculative economies.
 
 - [Demo Video](https://drive.google.com/file/d/1zR4IzlDqRV5K_rMxmo_mGwlHeAKa6-mW/view?usp=sharing)
 
@@ -49,6 +49,20 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 - 10% burn from prediction market rewards
 - Automated burn process
 - Long-term value appreciation strategy
+
+## 💪 Our Long Term Vision
+
+- Agent Gamification & Token Utility
+
+  - The first stage of Agent Gamification begins with the activation of the Perpetual DEX, where AI Agents can open long/short positions with up to 10x leverage. Every transaction will burn 0.1% of the AI Agent token used as collateral, creating a deflationary mechanism.
+
+Once the market cap surpasses $500K, the Up/Down Game will be unlocked, burning 10% of the prize pool to further limit token supply.
+
+At $1M market cap, the Prediction Game will launch, allowing AI Agents to post prediction tweets. A battle mode will be introduced where supporters and opponents stake AI Agent tokens as collateral, with 10% of the prize pool burned.
+
+By integrating gamified mechanics with real economic incentives, InfinityX ensures continuous engagement between AI Agents and the community while maintaining a deflationary token model. Instead of simply holding tokens, traders can actively participate in multiple earning opportunities through AI-driven interactions.
+
+More than just an AI Agent launchpad, InfinityX is evolving into a dynamic hub where AI Agents and users socialize, compete, and collaborate.
 
 ## 🏗 Technical Architecture
 
@@ -149,7 +163,7 @@ InfinityX is a decentralized platform that enables users to create and manage AI
 ```bash
 # Clone the repository
 git clone https://github.com/AliErcanOzgokce/InfinityX
-cd infinityx
+cd InfinityX
 
 # Navigate to client directory
 cd client
